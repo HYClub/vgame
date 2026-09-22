@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 影游平台 · 生态与付费演示</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background:#05070c;
+    font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    color:#eef3ff;
+  }
+
+  /* ===== 背景层 ===== */
+  .bg-layer {
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background:radial-gradient(ellipse at 50% 50%, #0d1424 0%, #05070c 75%);
+  }
+  #infinityCanvas {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    opacity:0.8;
+  }
+
+  /* ===== 内容容器 ===== */
+  .app {
+    position:relative;
+    z-index:10;
+    max-width:1320px;
+    margin:0 auto;
+    padding:2rem 2rem 3rem;
+  }
+
+  /* ===== 顶部导航 ===== */
+  .header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:1rem;
+    margin-bottom:1.8rem;
+  }
+  .header-left { display:flex; align-items:center; gap:0.8rem; }
+  .logo-mark { font-size:2rem; filter:drop-shadow(0 0 12px #3f6effaa); }
+  .header h1 {
+    font-size:1.6rem;
+    font-weight:600;
+    letter-spacing:-0.02em;
+    background:linear-gradient(135deg,#ffffff,#b7c9ff);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent;
+  }
+  .pill-tag {
+    font-size:0.72rem;
+    font-weight:500;
+    color:#90a9e0;
+    background:rgba(35,48,80,0.7);
+    padding:0.4rem 1.2rem;
+    border-radius:50px;
+    border:1px solid rgba(90,140,255,0.3);
+    letter-spacing:0.4px;
+    backdrop-filter:blur(4px);
+    white-space:nowrap;
+  }
+
+  /* ===== 页面切换 Tab ===== */
+  .tabs {
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.45rem;
+    margin-bottom:2rem;
+    background:rgba(14,20,34,0.6);
+    backdrop-filter:blur(10px);
+    padding:0.5rem;
+    border-radius:50px;
+    border:1px solid rgba(80,130,255,0.2);
+    width:fit-content;
+    max-width:100%;
+  }
+  .tab-btn {
+    font-family:inherit;
+    font-size:0.82rem;
+    font-weight:500;
+    color:#8da2d0;
+    background:transparent;
+    border:none;
+    padding:0.5rem 1.15rem;
+    border-radius:40px;
+    cursor:pointer;
+    transition:all 0.2s;
+    white-space:nowrap;
+  }
+  .tab-btn:hover { color:#c2d6ff; background:rgba(70,110,255,0.12); }
+  .tab-btn.active {
+    color:#ffffff;
+    background:linear-gradient(135deg,#3a5fd0,#5b4ce0);
+    box-shadow:0 6px 18px -6px #3f6eff, 0 0 0 1px rgba(140,180,255,0.4) inset;
+  }
+
+  /* ===== 页面主体 ===== */
+  .page { display:none; animation:fadeIn 0.35s ease; }
+  .page.active { display:block; }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .page-title {
+    font-size:1.5rem;
+    font-weight:600;
+    letter-spacing:-0.02em;
+    color:#dbe6ff;
+    margin-bottom:0.4rem;
+  }
+  .page-sub {
+    font-size:0.85rem;
+    color:#8da2d0;
+    margin-bottom:1.8rem;
+  }
+
+  /* ===== 卡片通用 ===== */
+  .card {
+    background:rgba(14,20,34,0.66);
+    backdrop-filter:blur(12px);
+    border-radius:2.4rem;
+    padding:1.8rem 1.8rem 2rem;
+    border:1px solid rgba(80,130,255,0.22);
+    box-shadow:0 18px 40px -22px #000000c0;
+    transition:transform 0.25s ease, border-color 0.25s, box-shadow 0.25s;
+  }
+  .card:hover {
+    border-color:rgba(120,170,255,0.55);
+    transform:translateY(-3px);
+    box-shadow:0 28px 50px -26px #1e3b8b;
+  }
+  .card-header {
+    display:flex;
+    align-items:center;
+    gap:0.8rem;
+    margin-bottom:1.3rem;
+    padding-bottom:0.85rem;
+    border-bottom:1px solid rgba(80,130,255,0.2);
+  }
+  .card-icon { font-size:1.8rem; filter:drop-shadow(0 0 10px #4d7aff); }
+  .card-header h2 {
+    font-size:1.15rem;
+    font-weight:600;
+    color:#dbe6ff;
+  }
+  .card-badge {
+    margin-left:auto;
+    font-size:0.65rem;
+    font-weight:500;
+    background:rgba(70,120,255,0.2);
+    padding:0.2rem 0.85rem;
+    border-radius:30px;
+    color:#a8c0ff;
+    border:1px solid rgba(120,170,255,0.32);
+    white-space:nowrap;
+  }
+
+  .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:1.6rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.3rem; }
+  .grid-4 { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1.1rem; }
+
+  /* ===== 步骤节点 ===== */
+  .step-node {
+    display:flex; align-items:center; gap:0.85rem;
+    background:rgba(24,33,54,0.75);
+    border-radius:1.6rem;
+    padding:0.65rem 1rem;
+    border:1px solid rgba(80,130,255,0.16);
+    transition:background 0.18s, border-color 0.18s;
+  }
+  .step-node:hover {
+    background:rgba(38,54,88,0.85);
+    border-color:rgba(130,170,255,0.55);
+  }
+  .node-icon { font-size:1.35rem; min-width:30px; text-align:center; filter:drop-shadow(0 0 6px #3f6effaa); }
+  .node-text { display:flex; flex-direction:column; }
+  .node-text strong { font-size:0.9rem; font-weight:600; color:#eef3ff; }
+  .node-text span { font-size:0.67rem; color:#8da2d0; margin-top:0.1rem; }
+  .node-arrow { margin-left:2.5rem; font-size:0.95rem; color:#4f6db0; opacity:0.65; line-height:1; }
+  .loop-flow { display:flex; flex-direction:column; gap:0.5rem; }
+  .loop-cycle {
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    margin-top:1.1rem; font-size:0.8rem; color:#82a0e6;
+    background:rgba(50,80,150,0.25);
+    padding:0.55rem 1rem; border-radius:40px;
+    border:1px dashed rgba(110,160,255,0.6); font-weight:500;
+  }
+
+  /* ===== 付费点卡片 ===== */
+  .pay-card {
+    background:rgba(18,24,40,0.75);
+    border-radius:1.8rem;
+    padding:1.3rem 1.4rem 1.5rem;
+    border:1px solid rgba(80,130,255,0.2);
+    transition:all 0.2s;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .pay-card::before {
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,#3f6eff,#a07aff);
+    opacity:0.7;
+  }
+  .pay-card:hover {
+    border-color:rgba(130,170,255,0.6);
+    background:rgba(26,36,58,0.9);
+    transform:translateY(-3px);
+    box-shadow:0 18px 32px -18px #1e3b8b;
+  }
+  .pay-head {
+    display:flex; align-items:center; gap:0.65rem;
+    margin-bottom:0.7rem;
+  }
+  .pay-emoji { font-size:1.5rem; filter:drop-shadow(0 0 8px #4d7aff); }
+  .pay-head h3 { font-size:0.95rem; font-weight:600; color:#e8f0ff; }
+  .pay-head .pay-type {
+    margin-left:auto;
+    font-size:0.6rem;
+    padding:0.15rem 0.65rem;
+    border-radius:20px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    white-space:nowrap;
+  }
+  .type-one  { background:rgba(255,180,80,0.18); color:#ffc670; border:1px solid rgba(255,180,80,0.4); }
+  .type-sub  { background:rgba(80,200,255,0.15); color:#7dd3fc; border:1px solid rgba(80,200,255,0.4); }
+  .type-free { background:rgba(120,220,160,0.15); color:#86efac; border:1px solid rgba(120,220,160,0.4); }
+  .type-ip   { background:rgba(200,120,255,0.15); color:#d8b4fe; border:1px solid rgba(200,120,255,0.4); }
+  .type-b2b  { background:rgba(255,120,150,0.15); color:#fda4af; border:1px solid rgba(255,120,150,0.4); }
+
+  .pay-desc {
+    font-size:0.75rem;
+    color:#9bb1e0;
+    line-height:1.65;
+    flex:1;
+  }
+  .pay-desc b { color:#c2d6ff; font-weight:600; }
+
+  .pay-price {
+    margin-top:0.75rem;
+    font-size:0.72rem;
+    color:#7dd3fc;
+    font-weight:600;
+    letter-spacing:0.2px;
+    padding-top:0.7rem;
+    border-top:1px dashed rgba(80,130,255,0.2);
+  }
+  .pay-price span { color:#4a5e83; font-weight:400; }
+
+  /* ===== 产线可视化 ===== */
+  .prod-line {
+    display:flex; align-items:center; gap:0.9rem;
+    background:rgba(24,33,54,0.7);
+    border-radius:1.4rem;
+    padding:0.85rem 1.1rem;
+    border:1px solid rgba(80,130,255,0.16);
+    margin-bottom:0.6rem;
+  }
+  .line-status { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .status-busy { background:#ffb450; box-shadow:0 0 10px #ffb450; }
+  .status-free { background:#4ade80; box-shadow:0 0 10px #4ade80; }
+  .status-cd   { background:#7dd3fc; box-shadow:0 0 10px #7dd3fc; }
+  .line-info { flex:1; }
+  .line-info strong { font-size:0.85rem; color:#e8f0ff; display:block; }
+  .line-info span { font-size:0.68rem; color:#8da2d0; }
+  .line-tag { font-size:0.62rem; padding:0.15rem 0.65rem; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .tag-busy { background:rgba(255,180,80,0.18); color:#ffc670; }
+  .tag-free { background:rgba(120,220,160,0.18); color:#86efac; }
+  .tag-cd   { background:rgba(80,200,255,0.15); color:#7dd3fc; }
+
+  /* ===== 表格 ===== */
+  .plan-table { width:100%; border-collapse:separate; border-spacing:0 0.4rem; font-size:0.76rem; }
+  .plan-table th {
+    text-align:left; padding:0.6rem 0.9rem; color:#7e96cc;
+    font-weight:500; font-size:0.68rem; letter-spacing:0.5px;
+    text-transform:uppercase;
+    border-bottom:1px solid rgba(80,130,255,0.2);
+  }
+  .plan-table td {
+    padding:0.7rem 0.9rem;
+    background:rgba(24,33,54,0.6);
+    color:#c2d6ff;
+    border-top:1px solid rgba(80,130,255,0.1);
+    border-bottom:1px solid rgba(80,130,255,0.1);
+  }
+  .plan-table tr td:first-child {
+    border-left:1px solid rgba(80,130,255,0.1);
+    border-radius:1rem 0 0 1rem;
+    font-weight:600; color:#e8f0ff;
+  }
+  .plan-table tr td:last-child {
+    border-right:1px solid rgba(80,130,255,0.1);
+    border-radius:0 1rem 1rem 0;
+  }
+  .plan-table tr.highlight td {
+    background:rgba(60,90,180,0.35);
+    border-color:rgba(120,170,255,0.35);
+  }
+
+  /* ===== IP流程 ===== */
+  .ip-flow { display:flex; flex-wrap:wrap; gap:0.55rem; align-items:center; }
+  .ip-step {
+    background:rgba(30,42,70,0.8);
+    border:1px solid rgba(90,140,255,0.25);
+    border-radius:1.4rem;
+    padding:0.65rem 1rem;
+    font-size:0.75rem;
+    color:#c2d6ff;
+    display:flex; align-items:center; gap:0.45rem;
+    flex:1 1 auto;
+  }
+  .ip-step span { font-size:1.05rem; }
+  .ip-arrow { color:#4f6db0; font-size:0.95rem; opacity:0.7; }
+
+  /* ===== 分类标签 ===== */
+  .category-tag {
+    display:inline-flex;
+    align-items:center;
+    gap:0.4rem;
+    font-size:0.7rem;
+    font-weight:600;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    color:#7e96cc;
+    margin:1.6rem 0 0.9rem 0.3rem;
+  }
+  .category-tag::before {
+    content:'';
+    width:3px; height:14px;
+    border-radius:2px;
+    background:linear-gradient(180deg,#3f6eff,#a07aff);
+  }
+
+  .divider {
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(90,140,255,0.3),transparent);
+    margin:1.5rem 0;
+  }
+
+  .note-bar {
+    display:flex; align-items:center; gap:0.6rem;
+    background:rgba(50,80,150,0.2);
+    border:1px solid rgba(90,140,255,0.3);
+    border-radius:1.4rem;
+    padding:0.7rem 1.2rem;
+    font-size:0.76rem;
+    color:#9bb1e0;
+    margin-top:1.2rem;
+    line-height:1.5;
+  }
+  .note-bar span { font-size:1.05rem; flex-shrink:0; }
+
+  /* 底部 */
+  .footnote {
+    text-align:center;
+    margin-top:2.4rem;
+    font-size:0.68rem;
+    color:#4e628a;
+    letter-spacing:0.3px;
+    line-height:1.8;
+    border-top:1px solid rgba(90,130,220,0.12);
+    padding-top:1.5rem;
+  }
+
+  /* 响应式 */
+  @media (max-width:880px){
+    .app { padding:1.6rem 1rem; }
+    .header h1 { font-size:1.3rem; }
+    .card { padding:1.4rem 1.2rem; border-radius:1.8rem; }
+    .node-arrow { margin-left:2rem; }
+  }
+  @media (max-width:550px){
+    .tabs { border-radius:1.5rem; padding:0.4rem; }
+    .tab-btn { font-size:0.72rem; padding:0.42rem 0.85rem; }
+    .card-header h2 { font-size:0.95rem; }
+    .node-text strong { font-size:0.78rem; }
+    .node-text span { font-size:0.6rem; }
+    .page-title { font-size:1.15rem; }
+    .pay-head h3 { font-size:0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <canvas id="infinityCanvas"></canvas>
+</div>
+
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <span class="logo-mark">🎬</span>
+      <h1>AI 影游平台</h1>
+    </div>
+    <div class="pill-tag">双闭环生态 · 12大付费点</div>
+  </div>
+
+  <!-- Tab 切换 -->
+  <div class="tabs">
+    <button class="tab-btn active" data-page="overview">🏠 平台总览</button>
+    <button class="tab-btn" data-page="create">🧑‍💻 创造闭环</button>
+    <button class="tab-btn" data-page="growth">🎮 增长闭环</button>
+    <button class="tab-btn" data-page="pay">💰 付费点体系</button>
+    <button class="tab-btn" data-page="ip">🎭 企业IP定制</button>
+  </div>
+
+  <!-- ============ 页1：平台总览 ============ -->
+  <div class="page active" id="page-overview">
+    <div class="page-title">平台总览 · 双闭环生态</div>
+    <div class="page-sub">开发者创造内容 → 发布 → 玩家游玩 → 转化开发者，形成增长飞轮</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🧑‍💻</span>
+          <h2>创造闭环</h2>
+          <span class="card-badge">开发者侧</span>
+        </div>
+        <div class="loop-flow">
+          <div class="step-node"><span class="node-icon">🔐</span><div class="node-text"><strong>登录平台</strong><span>一键进入 · 开发者账号</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">🤖</span><div class="node-text"><strong>AI 创作视频</strong><span>智能生成 · 快速产出</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">📁</span><div class="node-text"><strong>资源库沉淀</strong><span>素材 · 视频 · 模型复用</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">🎮</span><div class="node-text"><strong>创建影游项目</strong><span>设定世界观 · 玩法</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">⚙️</span><div class="node-text"><strong>配置 &amp; 构建</strong><span>参数调节 · 一键打包</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">🚀</span><div class="node-text"><strong>发布到平台</strong><span>上架 · 面向所有玩家</span></div></div>
+        </div>
+        <div class="loop-cycle"><span>♻️</span> 全程平台完成 · 持续迭代</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🎮</span>
+          <h2>增长闭环</h2>
+          <span class="card-badge">玩家侧 → 开发者</span>
+        </div>
+        <div class="loop-flow">
+          <div class="step-node"><span class="node-icon">📤</span><div class="node-text"><strong>分享 / 推广</strong><span>开发者分享作品至站外</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">👥</span><div class="node-text"><strong>引入新玩家</strong><span>被分享者进入平台</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">🕹️</span><div class="node-text"><strong>畅玩平台游戏</strong><span>体验用户构建的影游</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">✨</span><div class="node-text"><strong>产生创作兴趣</strong><span>“我也想做一个”</span></div></div>
+          <div class="node-arrow">↓</div>
+          <div class="step-node"><span class="node-icon">🧑‍💻</span><div class="node-text"><strong>转化为开发者</strong><span>加入创造闭环</span></div></div>
+        </div>
+        <div class="loop-cycle"><span>🚀</span> 玩家 → 开发者 · 飞轮增长</div>
+      </div>
+    </div>
+
+    <div class="note-bar" style="margin-top:1.6rem;">
+      <span>🔗</span>
+      <div>发布既是终点也是起点：作品发布后通过分享吸引玩家，玩家在体验中产生创作冲动，转化为新开发者，再次进入创造闭环 —— 平台生态自我强化。</div>
+    </div>
+  </div>
+
+  <!-- ============ 页2：创造闭环 ============ -->
+  <div class="page" id="page-create">
+    <div class="page-title">创造闭环 · 产线机制与构建</div>
+    <div class="page-sub">免费用户可用产线有限，付费解锁更多产线 / 缩短CD / 秒CD</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🏭</span>
+          <h2>产线状态演示</h2>
+          <span class="card-badge">当前：免费用户 · 1条产线</span>
+        </div>
+
+        <div class="prod-line">
+          <div class="line-status status-busy"></div>
+          <div class="line-info">
+            <strong>产线 1 · 构建中</strong>
+            <span>项目「星际回声」· 预计剩余 12 分钟</span>
+          </div>
+          <span class="line-tag tag-busy">构建中</span>
+        </div>
+
+        <div class="prod-line" style="opacity:0.5;">
+          <div class="line-status status-cd"></div>
+          <div class="line-info">
+            <strong>产线 2 · 未解锁</strong>
+            <span>升级订阅可解锁更多产线</span>
+          </div>
+          <span class="line-tag tag-cd">锁定</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="font-size:0.78rem;color:#9bb1e0;line-height:1.85;">
+          <b style="color:#c2d6ff;">规则说明</b><br>
+          • 免费用户：<b style="color:#ffc670;">1 条产线</b>，同时只能构建 1 个项目<br>
+          • 构建完成但<b style="color:#ffc670;">未发布</b>的项目，会继续<b style="color:#ffc670;">占据产线</b>，无法构建第二个项目<br>
+          • 构建完成后有<b style="color:#7dd3fc;">冷却 CD</b>，期间产线不可用<br>
+          • 付费可：<b>增加产线</b> / <b>缩短CD</b> / <b>直接秒CD</b>
+        </div>
+
+        <div class="note-bar" style="margin-top:1rem;">
+          <span>💡</span>
+          <div>免费用户被“未发布项目占线”卡住时，最直接的付费转化点就是 <b style="color:#ffc670;">秒CD</b> 或 <b style="color:#7dd3fc;">升级产线</b>。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📋</span>
+          <h2>订阅级别与产线权益</h2>
+          <span class="card-badge">订阅制</span>
+        </div>
+
+        <table class="plan-table">
+          <thead>
+            <tr>
+              <th>级别</th>
+              <th>产线数</th>
+              <th>构建CD</th>
+              <th>秒CD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>免费</td>
+              <td>1 条</td>
+              <td>较长</td>
+              <td>付费单次</td>
+            </tr>
+            <tr class="highlight">
+              <td>创作者</td>
+              <td>3 条</td>
+              <td>中等</td>
+              <td>折扣</td>
+            </tr>
+            <tr>
+              <td>工作室</td>
+              <td>8 条</td>
+              <td>短</td>
+              <td>免费额度</td>
+            </tr>
+            <tr>
+              <td>企业版</td>
+              <td>不限 / 专属</td>
+              <td>极短</td>
+              <td>无限秒CD</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="note-bar">
+          <span>⚡</span>
+          <div>订阅级别越高，产线越多、CD越短，且秒CD成本越低或免费。企业版支持专属产线与SLA保障。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 页3：增长闭环 ============ -->
+  <div class="page" id="page-growth">
+    <div class="page-title">增长闭环 · 分享、玩家与转化</div>
+    <div class="page-sub">作品发布后通过分享引入玩家，玩家游玩后有机会转化为开发者</div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🚀</span>
+        <h2>从发布到转化的完整链路</h2>
+        <span class="card-badge">增长飞轮</span>
+      </div>
+
+      <div class="loop-flow">
+        <div class="step-node"><span class="node-icon">📤</span><div class="node-text"><strong>开发者分享作品</strong><span>生成分享链接 / 海报 / 短视频，发布到站外社交平台</span></div></div>
+        <div class="node-arrow">↓</div>
+        <div class="step-node"><span class="node-icon">👥</span><div class="node-text"><strong>新玩家进入平台</strong><span>通过分享链接注册 / 直接游玩，无需下载</span></div></div>
+        <div class="node-arrow">↓</div>
+        <div class="step-node"><span class="node-icon">🕹️</span><div class="node-text"><strong>畅玩平台游戏库</strong><span>体验大量用户构建的互动影游，全部由创作者产出</span></div></div>
+        <div class="node-arrow">↓</div>
+        <div class="step-node"><span class="node-icon">✨</span><div class="node-text"><strong>产生创作兴趣</strong><span>“这个我也能做” —— 观看创作教程、体验AI工具</span></div></div>
+        <div class="node-arrow">↓</div>
+        <div class="step-node"><span class="node-icon">🧑‍💻</span><div class="node-text"><strong>转化为开发者</strong><span>注册开发者账号，进入创造闭环，开启第一个项目</span></div></div>
+      </div>
+
+      <div class="loop-cycle" style="margin-top:1.3rem;">
+        <span>🔁</span> 玩家 → 开发者 → 发布 → 吸引更多玩家 · 飞轮持续转动
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:1.6rem;">
+      <div class="card">
+        <div class="card-header"><span class="card-icon">📊</span><h2>转化关键</h2></div>
+        <div class="pay-desc">
+          玩家在游玩过程中，通过<b>创作入口曝光</b>、<b>低门槛AI工具</b>、<b>优秀作品激励</b>，被引导尝试创作，完成从消费者到生产者的角色转变。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-icon">🎁</span><h2>激励设计</h2></div>
+        <div class="pay-desc">
+          新人开发者可获<b>免费产线体验</b>、<b>AI创作额度</b>、<b>流量扶持</b>；优秀作品获得平台推荐与分成收益，强化创作动力。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-icon">🌐</span><h2>生态正循环</h2></div>
+        <div class="pay-desc">
+          更多开发者 → 更多作品 → 更多玩家 → 更多转化 → 更多开发者。平台内容库持续扩大，用户粘性与商业价值同步增长。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 页4：付费点体系（扩展版） ============ -->
+  <div class="page" id="page-pay">
+    <div class="page-title">付费点体系 · 全链路收费设计</div>
+    <div class="page-sub">从AI创作到构建发布，从CDN部署到IP授权，从素材交易到数据服务 — 共12大付费点</div>
+
+    <!-- 分类1：创作与构建 -->
+    <div class="category-tag">🎨 创作与构建</div>
+    <div class="grid-3">
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🤖</span>
+          <h3>AI 创作收费</h3>
+          <span class="pay-type type-one">按次 / 订阅</span>
+        </div>
+        <div class="pay-desc">
+          AI视频生成、AI剧本、AI配音、AI角色生成等能力，按<b>次数包</b>或<b>订阅额度</b>收费。免费用户每日少量体验额度，超出后付费购买。
+        </div>
+        <div class="pay-price">💰 次数包 / 月度订阅 <span>· 核心收入来源</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🏭</span>
+          <h3>产线扩容</h3>
+          <span class="pay-type type-sub">订阅</span>
+        </div>
+        <div class="pay-desc">
+          免费用户<b>1条产线</b>，同时只能构建1个项目。付费增加产线数量，支持并行构建多个项目，大幅提升创作效率。
+        </div>
+        <div class="pay-price">💰 按产线数订阅 <span>· 创作者/工作室分级</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">⏱️</span>
+          <h3>CD 缩短 / 秒CD</h3>
+          <span class="pay-type type-one">按次</span>
+        </div>
+        <div class="pay-desc">
+          构建完成后有冷却CD，期间产线不可用。可直接<b>付费秒CD</b>立即恢复，或通过订阅级别获得更短CD甚至免费秒CD。
+        </div>
+        <div class="pay-price">💰 单次秒CD / 订阅折扣 <span>· 高频转化点</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🔓</span>
+          <h3>未发布占线解锁</h3>
+          <span class="pay-type type-one">按次 / 订阅</span>
+        </div>
+        <div class="pay-desc">
+          构建完成但<b>未发布</b>的项目会持续占据产线，导致无法构建第二个项目。付费可<b>临时解锁额外产线</b>或<b>释放占线</b>。
+        </div>
+        <div class="pay-price">💰 解锁费 / 升级订阅 <span>· 强转化场景</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">📁</span>
+          <h3>资源库扩容</h3>
+          <span class="pay-type type-sub">订阅</span>
+        </div>
+        <div class="pay-desc">
+          免费用户资源库容量有限。付费扩容可获得更大存储空间、更高清素材托管、更长历史版本保留、团队共享资源库。
+        </div>
+        <div class="pay-price">💰 存储扩容包 / 订阅 <span>· 稳定复购</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🎨</span>
+          <h3>高级模板 &amp; 素材包</h3>
+          <span class="pay-type type-one">按次</span>
+        </div>
+        <div class="pay-desc">
+          平台提供专业级影游模板、剧情框架、角色立绘、场景素材、音效库等。免费用户使用基础款，付费解锁高级商用素材。
+        </div>
+        <div class="pay-price">💰 单套购买 / 会员免费 <span>· 内容电商</span></div>
+      </div>
+    </div>
+
+    <!-- 分类2：部署与分发 -->
+    <div class="category-tag">🌐 部署与分发</div>
+    <div class="grid-3">
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">⚡</span>
+          <h3>CDN 加速部署</h3>
+          <span class="pay-type type-sub">订阅 / 按量</span>
+        </div>
+        <div class="pay-desc">
+          作品发布后，免费用户走<b>公共CDN</b>（速度一般、可能有排队）。付费可开启<b>专属CDN加速</b>，全球节点分发、低延迟、高并发，适合正式宣发的作品。
+        </div>
+        <div class="pay-price">💰 按流量计费 / 订阅包含 <span>· 高毛利</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🌍</span>
+          <h3>自定义域名 &amp; 独立部署</h3>
+          <span class="pay-type type-b2b">B端 / 高级</span>
+        </div>
+        <div class="pay-desc">
+          支持绑定<b>自定义域名</b>、<b>独立部署</b>作品页、去除平台品牌标识，适合工作室/企业对外正式发布。
+        </div>
+        <div class="pay-price">💰 年费 / 企业版包含 <span>· 品牌溢价</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">📊</span>
+          <h3>数据看板 &amp; 高级分析</h3>
+          <span class="pay-type type-sub">订阅</span>
+        </div>
+        <div class="pay-desc">
+          基础数据免费（播放量、游玩次数）。付费解锁<b>用户画像</b>、<b>留存分析</b>、<b>转化漏斗</b>、<b>实时监控</b>，助力精细化运营。
+        </div>
+        <div class="pay-price">💰 订阅 / 按项目 <span>· 增值服务</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">📢</span>
+          <h3>推广流量包</h3>
+          <span class="pay-type type-one">按次</span>
+        </div>
+        <div class="pay-desc">
+          作品发布后，可付费购买平台<b>首页推荐位</b>、<b>分类Banner</b>、<b>推送曝光</b>，快速获取种子玩家，加速增长闭环启动。
+        </div>
+        <div class="pay-price">💰 按曝光量 / 竞价 <span>· 广告收入</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">💎</span>
+          <h3>付费内容 &amp; 内购分成</h3>
+          <span class="pay-type type-one">分成</span>
+        </div>
+        <div class="pay-desc">
+          开发者可将作品设为<b>付费游玩</b>或内置<b>道具/章节内购</b>。平台抽取一定比例分成，创作者获得收益，平台共享增长。
+        </div>
+        <div class="pay-price">💰 平台抽成 10%-30% <span>· 生态共赢</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🎁</span>
+          <h3>打赏 &amp; 粉丝订阅</h3>
+          <span class="pay-type type-one">分成</span>
+        </div>
+        <div class="pay-desc">
+          玩家可对喜爱的创作者<b>打赏</b>或<b>按月订阅</b>获取专属内容/早期体验。平台抽成，创作者获得持续收入。
+        </div>
+        <div class="pay-price">💰 平台抽成 10%-20% <span>· 创作者经济</span></div>
+      </div>
+    </div>
+
+    <!-- 分类3：IP与B端 -->
+    <div class="category-tag">🎭 IP授权与B端服务</div>
+    <div class="grid-3">
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🎬</span>
+          <h3>企业IP定制</h3>
+          <span class="pay-type type-ip">B端</span>
+        </div>
+        <div class="pay-desc">
+          企业/版权方申请使用公司IP创作。流程：<b>报名费</b> → 提交剧本 → 审核 → 限期构建 → 审核 → 议价 → 宣发/发布。平台收取报名费+议价分成。
+        </div>
+        <div class="pay-price">💰 报名费 + 议价分成 <span>· 高客单</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">📜</span>
+          <h3>IP 授权费 &amp; 版权登记</h3>
+          <span class="pay-type type-ip">B端</span>
+        </div>
+        <div class="pay-desc">
+          平台协助创作者进行<b>作品版权登记</b>、<b>IP授权交易</b>。企业购买IP使用权需支付授权费，平台抽取中介服务费。
+        </div>
+        <div class="pay-price">💰 授权费抽成 / 登记服务费 <span>· 法律服务</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🏢</span>
+          <h3>企业私有化部署</h3>
+          <span class="pay-type type-b2b">B端</span>
+        </div>
+        <div class="pay-desc">
+          大型企业客户可购买<b>私有化部署</b>方案，将平台能力部署到企业内部，用于员工培训、品牌互动、营销活动等场景。
+        </div>
+        <div class="pay-price">💰 项目制 / 年费 <span>· 高客单</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🎓</span>
+          <h3>培训 &amp; 认证</h3>
+          <span class="pay-type type-one">按次</span>
+        </div>
+        <div class="pay-desc">
+          平台提供<b>AI影游创作课程</b>、<b>官方认证</b>、<b>大师班</b>。创作者付费学习进阶技能，通过认证获得流量扶持与接单资格。
+        </div>
+        <div class="pay-price">💰 课程费 / 认证费 <span>· 教育收入</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🤝</span>
+          <h3>接单撮合 &amp; 外包平台</h3>
+          <span class="pay-type type-one">抽成</span>
+        </div>
+        <div class="pay-desc">
+          企业需求方发布定制需求，认证创作者接单。平台作为撮合方抽取<b>服务佣金</b>，同时提供合同、担保、验收等保障服务。
+        </div>
+        <div class="pay-price">💰 佣金 10%-20% <span>· 双边网络</span></div>
+      </div>
+
+      <div class="pay-card">
+        <div class="pay-head">
+          <span class="pay-emoji">🔌</span>
+          <h3>API &amp; 能力开放</h3>
+          <span class="pay-type type-b2b">按量</span>
+        </div>
+        <div class="pay-desc">
+          将平台的AI视频生成、影游引擎、资源库等能力以<b>API形式开放</b>给第三方开发者/企业，按调用量计费。
+        </div>
+        <div class="pay-price">💰 按调用量 <span>· 平台化收入</span></div>
+      </div>
+    </div>
+
+    <div class="note-bar" style="margin-top:1.6rem;">
+      <span>💡</span>
+      <div>
+        <b style="color:#c2d6ff;">付费设计原则：</b>
+        免费用户可完整体验全流程（1条产线 + 基础AI额度 + 公共CDN），但在<b>效率</b>（产线/秒CD）、<b>品质</b>（高级素材/CDN加速）、<b>商业</b>（分成/IP/私有化）三个维度上设置付费点，覆盖个人创作者到企业客户的全谱系需求。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 页5：企业IP定制 ============ -->
+  <div class="page" id="page-ip">
+    <div class="page-title">企业 IP 定制 · 从报名到发布</div>
+    <div class="page-sub">企业/版权方使用公司IP创作互动影游，平台提供全流程审核与服务</div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🎭</span>
+        <h2>IP 定制完整流程</h2>
+        <span class="card-badge">B端服务</span>
+      </div>
+
+      <div class="ip-flow">
+        <div class="ip-step"><span>📝</span> 报名 &amp; 缴费</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>📖</span> 提交剧本</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>🔍</span> 初审</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>⏳</span> 限期构建</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>✅</span> 终审</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>💬</span> 议价</div>
+        <div class="ip-arrow">→</div>
+        <div class="ip-step"><span>📢</span> 宣发 / 发布</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div>
+          <div style="font-size:0.8rem;color:#c2d6ff;font-weight:600;margin-bottom:0.5rem;">💰 收费点</div>
+          <div class="pay-desc">
+            • <b>报名费</b>：提交申请时缴纳，覆盖初审成本<br>
+            • <b>议价分成</b>：通过终审后，根据IP价值与制作难度协商分成比例<br>
+            • <b>宣发服务费</b>：平台提供推荐位、推广资源，可选付费包
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.8rem;color:#c2d6ff;font-weight:600;margin-bottom:0.5rem;">🔒 风控机制</div>
+          <div class="pay-desc">
+            • 剧本需通过<b>内容合规审核</b>与<b>IP授权核验</b><br>
+            • 限期构建，超时未完成视为放弃，报名费不退<br>
+            • 终审不通过可修改后重新提交（限次数）
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.8rem;color:#c2d6ff;font-weight:600;margin-bottom:0.5rem;">📈 平台收益</div>
+          <div class="pay-desc">
+            • 报名费（固定收入）<br>
+            • 议价分成（作品收益分成）<br>
+            • 宣发服务费（可选包）<br>
+            • 后续IP授权交易中介费
+          </div>
+        </div>
+      </div>
+
+      <div class="note-bar" style="margin-top:1.4rem;">
+        <span>🎯</span>
+        <div>
+          企业IP定制是平台<b>高客单价</b>业务：报名费筛选真实需求，限期构建控制风险，议价分成分享作品长期收益，宣发服务费进一步放大商业价值。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    ⏺️ 创造闭环：登录 → AI创作 → 资源库 → 创建项目 → 配置构建 → 发布 &nbsp;|&nbsp; 增长闭环：分享 → 玩家游玩 → 兴趣转化 → 成为开发者<br>
+    ⏺️ 12大付费点：AI创作 · 产线扩容 · 秒CD · 占线解锁 · 资源扩容 · 高级素材 · CDN加速 · 自定义域名 · 数据看板 · 推广流量 · 内购分成 · 打赏订阅 · IP定制 · 版权登记 · 私有化部署 · 培训认证 · 接单撮合 · API开放
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('infinityCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let W, H, cx, cy, scale;
+  let particles = [];
+  const PARTICLE_COUNT = 240;
+
+  const COLORS = ['#aaccff','#7fa9ff','#b7d0ff','#d0e0ff','#e0ebff','#c2d6ff','#9bb5ff','#6d8cff','#ffffff'];
+
+  /* 双纽线（Lemniscate of Bernoulli）—— 标准 ∞ 形状 */
+  function infinityPoint(t){
+    const s = Math.sin(t);
+    const c = Math.cos(t);
+    const denom = 1 + s * s;
+    return { x: c / denom, y: c * s / denom };
+  }
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cx = W / 2;
+    cy = H / 2;
+    scale = Math.min(W, H) * 0.40;
+    buildParticles();
+  }
+
+  function buildParticles(){
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++){
+      const onPath = Math.random() < 0.7;
+      const t = Math.random() * Math.PI * 2;
+      particles.push({
+        t: t,
+        onPath: onPath,
+        baseR: onPath ? 0 : 0.06 + Math.random() * 0.28,
+        baseA: Math.random() * Math.PI * 2,
+        speed: (0.0009 + Math.random() * 0.0028) * (Math.random() < 0.5 ? 1 : -1),
+        size: 0.9 + Math.random() * 2.4,
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        phase: Math.random() * Math.PI * 2,
+        twinkle: 0.012 + Math.random() * 0.035,
+        driftR: (Math.random() - 0.5) * 0.015,
+        driftA: (Math.random() - 0.5) * 0.012
+      });
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    const STEPS = 500;
+    // 外层柔光
+    ctx.beginPath();
+    for (let i = 0; i <= STEPS; i++){
+      const t = (i / STEPS) * Math.PI * 2;
+      const p = infinityPoint(t);
+      const x = p.x * scale, y = p.y * scale;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(90,140,255,0.10)';
+    ctx.lineWidth = 22;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(120,170,255,0.16)';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(170,205,255,0.42)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(230,240,255,0.55)';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+
+    // 粒子
+    const now = performance.now() * 0.001;
+    for (let p of particles){
+      p.t += p.speed;
+      if (p.t > Math.PI * 2) p.t -= Math.PI * 2;
+      if (p.t < 0) p.t += Math.PI * 2;
+
+      const base = infinityPoint(p.t);
+      let x, y;
+      if (p.onPath){ x = base.x; y = base.y; }
+      else {
+        p.baseR += p.driftR * 0.02;
+        p.baseA += p.driftA * 0.02;
+        if (p.baseR < 0.03) p.baseR = 0.03;
+        if (p.baseR > 0.38) p.baseR = 0.38;
+        const r = p.baseR * (0.9 + 0.15 * Math.sin(now * 1.6 + p.phase));
+        x = base.x + Math.cos(p.baseA) * r;
+        y = base.y + Math.sin(p.baseA) * r;
+      }
+
+      const sx = x * scale, sy = y * scale;
+      p.phase += p.twinkle;
+      const tw = 0.5 + 0.5 * Math.sin(p.phase);
+      const size = p.size * (0.75 + 0.5 * tw);
+      const alpha = 0.35 + 0.65 * tw;
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, size * 2.6, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha * 0.12;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, size * 0.42, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = alpha * 0.95;
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function loop(){ draw(); requestAnimationFrame(loop); }
+
+  window.addEventListener('resize', resize);
+  resize();
+  loop();
+})();
+
+/* ===== Tab 切换 ===== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    // 切换页面时滚动到顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
