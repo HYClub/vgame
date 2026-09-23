@@ -303,13 +303,12 @@
     border-color:rgba(120,170,255,0.35);
   }
 
-  /* ====== IP 流程样式修正 ====== */
   .ip-flow {
     display:flex;
     flex-wrap:wrap;
     gap:0.55rem;
     align-items:center;
-    justify-content:center; /* 居中 */
+    justify-content:center;
   }
   .ip-step {
     background:rgba(30,42,70,0.8);
@@ -319,13 +318,12 @@
     font-size:0.75rem;
     color:#c2d6ff;
     display:flex; align-items:center; gap:0.45rem;
-    flex:0 1 auto; /* 修正：不再强制拉伸 */
-    white-space:nowrap; /* 防止内部文字换行 */
+    flex:0 1 auto;
+    white-space:nowrap;
   }
   .ip-step span { font-size:1.05rem; }
   .ip-arrow { color:#4f6db0; font-size:0.95rem; opacity:0.7; flex-shrink:0; }
 
-  /* 小屏幕上垂直排列，箭头向下 */
   @media (max-width: 768px) {
     .ip-flow { flex-direction:column; }
     .ip-arrow { transform:rotate(90deg); margin:0.15rem 0; }
@@ -1049,6 +1047,11 @@
   let particles = [];
   const PARTICLE_COUNT = 240;
 
+  // 无限符号的位置偏移（相对于屏幕中心）
+  // target 为目标值，current 为当前值，实现平滑动画
+  let offsetX = 0, offsetY = 0;
+  let targetOffsetX = 0, targetOffsetY = 0;
+
   const COLORS = ['#aaccff','#7fa9ff','#b7d0ff','#d0e0ff','#e0ebff','#c2d6ff','#9bb5ff','#6d8cff','#ffffff'];
 
   function infinityPoint(t){
@@ -1063,7 +1066,8 @@
     H = canvas.height = window.innerHeight;
     cx = W / 2;
     cy = H / 2;
-    scale = Math.min(W, H) * 0.40;
+    // 放大无限符号：从 0.40 提升到 0.62
+    scale = Math.min(W, H) * 0.62;
     buildParticles();
   }
 
@@ -1090,8 +1094,13 @@
 
   function draw(){
     ctx.clearRect(0, 0, W, H);
+
+    // 平滑过渡到目标偏移
+    offsetX += (targetOffsetX - offsetX) * 0.08;
+    offsetY += (targetOffsetY - offsetY) * 0.08;
+
     ctx.save();
-    ctx.translate(cx, cy);
+    ctx.translate(cx + offsetX, cy + offsetY);
 
     const STEPS = 500;
     ctx.beginPath();
@@ -1171,6 +1180,12 @@
   window.addEventListener('resize', resize);
   resize();
   loop();
+
+  // 暴露给外部修改偏移
+  window.setInfinityOffset = function(x, y){
+    targetOffsetX = x;
+    targetOffsetY = y;
+  };
 })();
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1179,6 +1194,29 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('page-' + btn.dataset.page).classList.add('active');
+
+    // ===== 根据 Tab 移动无限符号 =====
+    const page = btn.dataset.page;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // 符号宽度约为 min(w,h) * 0.62 * 2 （双纽线的x范围为[-1,1]）
+    // 我们想让符号的其中一环占据屏幕可视区域
+    const symbolWidth = Math.min(w, h) * 0.62;
+    // 偏移量：让符号的右侧大部分出现在左边屏，或反之
+    // 移动量约为符号宽度的 45%
+    const shift = symbolWidth * 0.45;
+
+    if (page === 'create') {
+      // 创造闭环：显示符号的右侧大部分 → 符号整体向左移动
+      window.setInfinityOffset(-shift, 0);
+    } else if (page === 'growth') {
+      // 增长闭环：显示符号的左侧大部分 → 符号整体向右移动
+      window.setInfinityOffset(shift, 0);
+    } else {
+      // 其他页面：回到居中
+      window.setInfinityOffset(0, 0);
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
