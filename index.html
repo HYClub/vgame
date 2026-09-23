@@ -1047,8 +1047,7 @@
   let particles = [];
   const PARTICLE_COUNT = 240;
 
-  // 无限符号的位置偏移（相对于屏幕中心）
-  // target 为目标值，current 为当前值，实现平滑动画
+  // 无限符号的位置偏移
   let offsetX = 0, offsetY = 0;
   let targetOffsetX = 0, targetOffsetY = 0;
 
@@ -1066,7 +1065,7 @@
     H = canvas.height = window.innerHeight;
     cx = W / 2;
     cy = H / 2;
-    // 放大无限符号：从 0.40 提升到 0.62
+    // 放大无限符号
     scale = Math.min(W, H) * 0.62;
     buildParticles();
   }
@@ -1181,7 +1180,6 @@
   resize();
   loop();
 
-  // 暴露给外部修改偏移
   window.setInfinityOffset = function(x, y){
     targetOffsetX = x;
     targetOffsetY = y;
@@ -1199,19 +1197,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const page = btn.dataset.page;
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // 符号宽度约为 min(w,h) * 0.62 * 2 （双纽线的x范围为[-1,1]）
-    // 我们想让符号的其中一环占据屏幕可视区域
     const symbolWidth = Math.min(w, h) * 0.62;
-    // 偏移量：让符号的右侧大部分出现在左边屏，或反之
-    // 移动量约为符号宽度的 45%
     const shift = symbolWidth * 0.45;
 
     if (page === 'create') {
-      // 创造闭环：显示符号的右侧大部分 → 符号整体向左移动
-      window.setInfinityOffset(-shift, 0);
-    } else if (page === 'growth') {
-      // 增长闭环：显示符号的左侧大部分 → 符号整体向右移动
+      // 创造闭环：显示符号的左侧大部分 → 符号整体向右移动
       window.setInfinityOffset(shift, 0);
+    } else if (page === 'growth') {
+      // 增长闭环：显示符号的右侧大部分 → 符号整体向左移动
+      window.setInfinityOffset(-shift, 0);
     } else {
       // 其他页面：回到居中
       window.setInfinityOffset(0, 0);
